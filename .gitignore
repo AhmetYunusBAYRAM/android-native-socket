@@ -1,0 +1,71 @@
+# Flutter ve Dart için
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.idea/
+.vscode/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+coverage/
+generated_plugin_registrant.dart
+
+# Android
+android/.gradle/
+android/captures/
+android/local.properties
+android/.idea/
+
+# iOS
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/App.framework
+ios/Flutter/ephemeral/
+ios/.symlinks/
+ios/Pods/
+ios/.dart_tool/
+ios/Runner.xcworkspace/
+ios/DerivedData/
+ios/.idea/
+
+# macOS
+macos/Flutter/ephemeral/
+macos/.dart_tool/
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/Flutter.framework
+macos/Flutter/App.framework
+macos/.idea/
+
+# Web
+web/.dart_tool/
+web/.idea/
+
+# Windows
+windows/flutter/ephemeral/
+windows/.dart_tool/
+windows/.idea/
+
+# Linux
+linux/flutter/ephemeral/
+linux/.dart_tool/
+linux/.idea/
+
+# Genel
+*.iml
+*.ipr
+*.iws
+*.log
+*.tmp
+*.lock
+*.swp
+*.swo
+*.DS_Store
+*.class
+
+# Kişisel dosyalar
+*.env
+.env.*
