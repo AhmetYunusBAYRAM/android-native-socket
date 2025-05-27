@@ -45,18 +45,7 @@ This project allows real-time **text and voice message exchange** between a vict
 
 ---
 
-## 📸 Screenshots *(Optional)*
-
-*Add screenshots here if available*
-
----
-
 ## 🧑‍💻 Author
 
-Developed by [Your Name] — for emergency communication and offline resilience.
+Developed by Ahmet Yunus BAYRAM — for emergency communication and offline resilience.
 
----
-
-## 📄 License
-
-MIT License *(or your preferred license)*
