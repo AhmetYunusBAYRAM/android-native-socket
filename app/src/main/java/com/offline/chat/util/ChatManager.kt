@@ -1,3 +1,9 @@
+// ✅ ChatManager.kt (Geliştirilmiş)
+// - AUDIO: başlığı ile gelen sesli mesajları tanır
+// - BufferedInputStream ile veri ayrımı yapılır
+// - Metin ve sesli mesajlar ayırt edilir
+// - Time-out, exception kontrolü ve bağlantı kapatma güvenli hale getirilmiştir
+
 package com.offline.chat.util
 
 import com.offline.chat.model.ChatMessage
@@ -39,15 +45,34 @@ class ChatManager(
             while (isRunning) {
                 try {
                     val client = serverSocket?.accept() ?: break
-                    val reader = BufferedReader(InputStreamReader(client.getInputStream()))
-                    val line = reader.readLine()
                     val senderIp = client.inetAddress.hostAddress ?: "Bilinmiyor"
 
-                    if (senderIp != localIp && !line.isNullOrEmpty()) {
+                    if (senderIp != localIp) {
+                        val input = client.getInputStream()
+                        val bufferedInput = BufferedInputStream(input)
+                        bufferedInput.mark(10)
+
+                        val header = ByteArray(6)
+                        bufferedInput.read(header)
+                        bufferedInput.reset()
+
+                        val headerString = String(header)
                         val timestamp = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-                        onMessageReceived(
-                            ChatMessage(senderIp, line, timestamp, false)
-                        )
+
+                        if (headerString.startsWith("AUDIO:")) {
+                            bufferedInput.skip(6)
+                            val objectInput = ObjectInputStream(bufferedInput)
+                            val audioBytes = objectInput.readObject() as? ByteArray
+                            if (audioBytes != null) {
+                                onMessageReceived(ChatMessage(senderIp, "[Sesli Mesaj]", timestamp, false, isAudio = true, audioBytes = audioBytes))
+                            }
+                        } else {
+                            val reader = BufferedReader(InputStreamReader(bufferedInput))
+                            val text = reader.readLine()
+                            if (!text.isNullOrEmpty()) {
+                                onMessageReceived(ChatMessage(senderIp, text, timestamp, false))
+                            }
+                        }
                     }
                     client.close()
                 } catch (e: Exception) {
@@ -63,7 +88,8 @@ class ChatManager(
 
     suspend fun sendMessage(targetIp: String, message: String) = withContext(Dispatchers.IO) {
         try {
-            val socket = Socket(targetIp, port)
+            val socket = Socket()
+            socket.connect(InetSocketAddress(targetIp, port), 3000)
             val writer = BufferedWriter(OutputStreamWriter(socket.getOutputStream()))
             writer.write(message)
             writer.newLine()
@@ -71,12 +97,19 @@ class ChatManager(
             socket.close()
             true
         } catch (e: Exception) {
-            onError("$targetIp'ye gönderilemedi: ${e.message}")
+            onError("$targetIp'ye mesaj gönderilemedi: ${e.message}")
             false
         }
     }
 
-    suspend fun findServer() = withContext(Dispatchers.IO) {
+    fun stopServer() {
+        isRunning = false
+        try {
+            serverSocket?.close()
+        } catch (_: Exception) {}
+    }
+
+    suspend fun findServer(): String? = withContext(Dispatchers.IO) {
         try {
             val interfaces = NetworkInterface.getNetworkInterfaces()
             for (intf in interfaces) {
@@ -86,13 +119,12 @@ class ChatManager(
                         val ip = addr.hostAddress
                         if (ip.startsWith("192.168.")) {
                             val prefix = ip.substringBeforeLast(".")
-
-                            val searchJobs = (1..254).map { i ->
+                            val jobs = (1..254).map { i ->
                                 async(Dispatchers.IO) {
                                     val testIp = "$prefix.$i"
                                     try {
                                         val socket = Socket()
-                                        socket.connect(InetSocketAddress(testIp, port), 200)
+                                        socket.connect(InetSocketAddress(testIp, port), 300)
                                         socket.close()
                                         testIp
                                     } catch (_: IOException) {
@@ -100,12 +132,9 @@ class ChatManager(
                                     }
                                 }
                             }
-
-                            for (job in searchJobs) {
-                                val result = job.await()
-                                if (result != null) {
-                                    return@withContext result
-                                }
+                            for (job in jobs) {
+                                val found = job.await()
+                                if (found != null) return@withContext found
                             }
                         }
                     }
@@ -116,12 +145,5 @@ class ChatManager(
             onError("Sunucu arama hatası: ${e.message}")
             null
         }
-    }
-
-    fun stopServer() {
-        isRunning = false
-        try {
-            serverSocket?.close()
-        } catch (_: Exception) {}
     }
 }

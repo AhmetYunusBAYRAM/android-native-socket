@@ -19,13 +19,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.*
-
-import com.offline.chat.screens.ServerUI
+import android.Manifest
+import androidx.activity.result.contract.ActivityResultContracts
 import com.offline.chat.screens.SenderUI
+import com.offline.chat.screens.ServerUI
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val requestPermissionLauncher =  registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+                if (!isGranted) {
+                    // Kullanıcı reddettiyse yapılacaklar
+                }
+            }
+
+        requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         setContent {
             MaterialTheme {
                 val roleState = remember { mutableStateOf<String?>(null) }
